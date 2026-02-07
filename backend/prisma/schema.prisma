@@ -1,0 +1,102 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id            String   @id @default(cuid())
+  email         String   @unique
+  name          String?
+  avatar        String?
+  googleId      String?  @unique @map("google_id")
+  createdAt     DateTime @default(now()) @map("created_at")
+  updatedAt     DateTime @updatedAt @map("updated_at")
+
+  emailCampaigns EmailCampaign[]
+  sentEmails     SentEmail[]
+}
+
+model EmailCampaign {
+  id              String   @id @default(cuid())
+  userId          String   @map("user_id")
+  user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  subject         String
+  body            String   @db.Text
+  fromEmail       String   @map("from_email")
+  startTime       DateTime @map("start_time")
+  delayBetweenMs  Int      @default(2000) @map("delay_between_ms")
+  hourlyLimit     Int      @default(100) @map("hourly_limit")
+  
+  status          CampaignStatus @default(SCHEDULED)
+  totalRecipients Int      @default(0) @map("total_recipients")
+  processedCount  Int      @default(0) @map("processed_count")
+  
+  createdAt       DateTime @default(now()) @map("created_at")
+  updatedAt       DateTime @updatedAt @map("updated_at")
+
+  recipients      CampaignRecipient[]
+  sentEmails      SentEmail[]
+}
+
+model CampaignRecipient {
+  id         String       @id @default(cuid())
+  campaignId String       @map("campaign_id")
+  campaign   EmailCampaign @relation(fields: [campaignId], references: [id], onDelete: Cascade)
+  email      String
+  orderIndex Int          @default(0) @map("order_index")
+  sentAt     DateTime?    @map("sent_at")
+  status     RecipientStatus @default(PENDING)
+  
+  createdAt  DateTime     @default(now()) @map("created_at")
+  updatedAt  DateTime     @updatedAt @map("updated_at")
+
+  @@unique([campaignId, email])
+  @@index([campaignId])
+  @@index([campaignId, orderIndex])
+}
+
+model SentEmail {
+  id         String   @id @default(cuid())
+  campaignId String   @map("campaign_id")
+  campaign   EmailCampaign @relation(fields: [campaignId], references: [id], onDelete: Cascade)
+  userId     String   @map("user_id")
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  toEmail    String   @map("to_email")
+  subject    String
+  body       String   @db.Text
+  fromEmail  String   @map("from_email")
+  
+  status     SentStatus @default(SENT)
+  sentAt     DateTime @map("sent_at")
+  errorMessage String? @map("error_message")
+  
+  createdAt  DateTime @default(now()) @map("created_at")
+
+  @@index([userId])
+  @@index([campaignId])
+  @@index([sentAt])
+}
+
+enum CampaignStatus {
+  SCHEDULED
+  IN_PROGRESS
+  COMPLETED
+  CANCELLED
+}
+
+enum RecipientStatus {
+  PENDING
+  SENT
+  FAILED
+}
+
+enum SentStatus {
+  SENT
+  FAILED
+}
