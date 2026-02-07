@@ -3,7 +3,7 @@ import passport from 'passport';
 import jwt from 'jsonwebtoken';
 import { config } from '../config';
 import { prisma } from '../lib/prisma';
-import { AuthRequest, authMiddleware } from '../middleware/auth';
+import { authMiddleware } from '../middleware/auth';
 
 const router = Router();
 
@@ -36,9 +36,9 @@ router.get(
   }
 );
 
-router.get('/me', authMiddleware, (req: AuthRequest, res) => {
+router.get('/me', authMiddleware, (req: Request, res) => {
   const u = req.user!;
-  return res.json({ id: u.id, email: u.email, name: u.name, avatar: u.avatar });
+  res.json({ id: u.id, email: u.email, name: u.name, avatar: u.avatar });
 });
 
 export default router;

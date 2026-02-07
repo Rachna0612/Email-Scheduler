@@ -117,7 +117,7 @@ export async function getScheduledEmails(userId: string) {
   }> = [];
   for (const c of campaigns) {
     const baseTime = c.startTime.getTime();
-    c.recipients.forEach((r, i) => {
+    c.recipients.forEach((r: { id: string; email: string }, i: number) => {
       const scheduledTime = new Date(baseTime + i * c.delayBetweenMs);
       scheduled.push({
         id: r.id,

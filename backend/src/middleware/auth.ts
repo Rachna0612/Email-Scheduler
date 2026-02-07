@@ -8,16 +8,13 @@ export interface JwtPayload {
   email: string;
 }
 
-export interface AuthRequest extends Request {
-  user?: { id: string; email: string; name: string | null; avatar: string | null };
-}
-
-export async function authMiddleware(req: AuthRequest, res: Response, next: NextFunction) {
+export async function authMiddleware(req: Request, res: Response, next: NextFunction): Promise<void> {
   const authHeader = req.headers.authorization;
   const token = authHeader?.startsWith('Bearer ') ? authHeader.slice(7) : null;
 
   if (!token) {
-    return res.status(401).json({ error: 'Authentication required' });
+    res.status(401).json({ error: 'Authentication required' });
+    return;
   }
 
   try {
@@ -26,7 +23,8 @@ export async function authMiddleware(req: AuthRequest, res: Response, next: Next
       where: { id: decoded.userId },
     });
     if (!user) {
-      return res.status(401).json({ error: 'User not found' });
+      res.status(401).json({ error: 'User not found' });
+      return;
     }
     req.user = {
       id: user.id,
@@ -36,6 +34,6 @@ export async function authMiddleware(req: AuthRequest, res: Response, next: Next
     };
     next();
   } catch {
-    return res.status(401).json({ error: 'Invalid or expired token' });
+    res.status(401).json({ error: 'Invalid or expired token' });
   }
 }

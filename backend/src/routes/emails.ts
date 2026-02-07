@@ -1,5 +1,5 @@
-import { Router } from 'express';
-import { AuthRequest, authMiddleware } from '../middleware/auth';
+import { Router, Request, Response } from 'express';
+import { authMiddleware } from '../middleware/auth';
 import {
   scheduleCampaign,
   getScheduledEmails,
@@ -11,7 +11,7 @@ const router = Router();
 
 router.use(authMiddleware);
 
-router.post('/schedule', async (req: AuthRequest, res) => {
+router.post('/schedule', async (req: Request, res: Response) => {
   try {
     const { subject, body, fromEmail, recipients, startTime, delayBetweenMs, hourlyLimit } = req.body;
     const userId = req.user!.id;
@@ -40,7 +40,7 @@ router.post('/schedule', async (req: AuthRequest, res) => {
   }
 });
 
-router.get('/scheduled', async (req: AuthRequest, res) => {
+router.get('/scheduled', async (req: Request, res: Response) => {
   try {
     const userId = req.user!.id;
     const scheduled = await getScheduledEmails(userId);
@@ -51,11 +51,11 @@ router.get('/scheduled', async (req: AuthRequest, res) => {
   }
 });
 
-router.get('/sent', async (req: AuthRequest, res) => {
+router.get('/sent', async (req: Request, res: Response) => {
   try {
     const userId = req.user!.id;
     const sent = await getSentEmails(userId);
-    return res.json(sent.map((e) => ({
+    return res.json(sent.map((e: { id: string; toEmail: string; subject: string; sentAt: Date; status: string }) => ({
       id: e.id,
       to: e.toEmail,
       subject: e.subject,
@@ -68,7 +68,7 @@ router.get('/sent', async (req: AuthRequest, res) => {
   }
 });
 
-router.get('/campaign/:id', async (req: AuthRequest, res) => {
+router.get('/campaign/:id', async (req: Request, res: Response) => {
   try {
     const userId = req.user!.id;
     const campaign = await getCampaignDetail(req.params.id, userId);
